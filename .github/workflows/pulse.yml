@@ -1,0 +1,44 @@
+name: Pulse
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pulse
+  cancel-in-progress: true
+
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: pulse
+        uses: skodapetr/repository-pulse@v1
+        with:
+          repositories: |
+            dataspecer/dataspecer
+          components: json, html, agent, step-summary
+          days: 7
+          output-directory: site
+          title: Dataspecer pulse
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pulse-${{ github.run_id }}
+          path: site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
